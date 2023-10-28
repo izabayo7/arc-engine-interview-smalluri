@@ -46,6 +46,7 @@ services:
       SHORT_CODE_LENGTH: 5
       REDIS_EXPIRY: 86400
       REDIS_URL: redis:6379
+      DELETE_URL_AFTER: 7776000
       # cannot allow multiple workers because of git conflicts
       WORKERS: 1
     depends_on:
@@ -60,6 +61,16 @@ services:
     networks:
       - aei
     command: redis-server --appendonly yes  # enabling persistence
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=localhost
+    # ports:
+    #   - "8081:8081"
+    network_mode: "host"
+    depends_on:
+      - redis
 
   dynamo:
     container_name: dynamo

@@ -12,6 +12,7 @@ provider:
     SHORT_CODE_LENGTH: ${env:SHORT_CODE_LENGTH, 5}
     REDIS_EXPIRY: ${env:REDIS_EXPIRY, 86400}
     REDIS_URL: ${env:REDIS_URL, 'redis://localhost:6379'}
+    DELETE_URL_AFTER: ${env:DELETE_URL_AFTER, 7776000}
 
 functions:
   backend:

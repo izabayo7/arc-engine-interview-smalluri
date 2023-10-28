@@ -103,6 +103,7 @@
     "@types/redis": "^4.0.11",
     "express": "^4.18.1",
     "joi": "^17.11.0",
+    "node-cron": "^3.0.2",
     "redis": "^4.6.10",
     "winston": "^3.11.0",
     "winston-daily-rotate-file": "^4.7.1"

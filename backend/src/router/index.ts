@@ -18,7 +18,7 @@ import { redisExpiry, shortCodeLength } from '../environment'; // default expiry
  */
 const router = express.Router();
 
-router.use("/shorten", validateUrlShorteningRequest, async (req, res) => {
+router.post("/shorten", validateUrlShorteningRequest, async (req, res) => {
   const { url } = req.body;
 
   logger.info(`Received request to shorten URL: ${url}`);
@@ -45,6 +45,7 @@ router.use("/shorten", validateUrlShorteningRequest, async (req, res) => {
 
     // cache the url
     await client.set(url, shortCode, { EX: redisExpiry });
+    await client.set(shortCode, url, { EX: redisExpiry });
 
     res.status(201).send({
       data: {
@@ -58,7 +59,7 @@ router.use("/shorten", validateUrlShorteningRequest, async (req, res) => {
   }
 });
 
-router.use("/:shortCode", validateUrlRetrievalRequest, async (req, res) => {
+router.get("/:shortCode", validateUrlRetrievalRequest, async (req, res) => {
   const { shortCode } = req.params;
 
   logger.info(`Received request to retrieve original URL for shortCode: ${shortCode}`);
@@ -88,6 +89,43 @@ router.use("/:shortCode", validateUrlRetrievalRequest, async (req, res) => {
   } catch (error: any) {
     logger.error(`Error retrieving URL for shortCode ${shortCode}: ${error.message}`);
     res.status(500).send({ error: 'Failed to retrieve the URL.' });
+  }
+});
+
+router.delete("/:shortCode", validateUrlRetrievalRequest, async (req, res) => {
+  const { shortCode } = req.params;
+
+  logger.info(`Received request to delete shortCode: ${shortCode}`);
+
+  try {
+
+    // Check cache first
+    const cachedUrl = await client.get(shortCode);
+    if (cachedUrl) {
+      logger.info(`Deleting cached URL: ${cachedUrl} for shortCode: ${shortCode}`);
+      await client.del(shortCode);
+      await client.del(cachedUrl);
+    }
+
+    const url = await dbClient.getUrl(shortCode);
+
+    if (!url) {
+      logger.warn(`No URL found for shortCode: ${shortCode}`);
+      return res.sendStatus(404);
+    }
+
+    await dbClient.deleteUrl(shortCode);
+
+    logger.info(`Deleted URL: ${url} for shortCode: ${shortCode}`);
+    res.status(200).send({
+      message: `Deleted URL: ${url} for shortCode: ${shortCode}`
+    });
+
+    return;
+
+  } catch (error: any) {
+    logger.error(`Error deleting URL for shortCode ${shortCode}: ${error.message}`);
+    res.status(500).send({ error: 'Failed to delete the URL.' });
   }
 });
 
