@@ -1,0 +1,19 @@
+{
+  "TableName" : "ExampleTable",
+  "KeySchema": [
+    {
+      "AttributeName": "StringElement",
+      "KeyType": "HASH"
+    }
+  ],
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "StringElement",
+      "AttributeType": "S"
+    }
+  ],
+  "ProvisionedThroughput": {
+    "ReadCapacityUnits": 1,
+    "WriteCapacityUnits": 1
+  }
+}

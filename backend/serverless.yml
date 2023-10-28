@@ -1,0 +1,38 @@
+# serverless.yml
+
+service: backend
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  stage: localhost
+  region: us-east-1
+  environment:
+    NODE_ENV: ${env:NODE_ENV, 'development'}
+
+functions:
+  backend:
+    handler: dist/index.serverless
+    events:
+      - http: ANY /
+      - http: "ANY /{proxy+}"
+    timeout: 60
+
+package:
+  exclude:
+    - package-lock.json
+    - serverless.yml
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    host: "0.0.0.0"
+    httpPort: ${env:PORT, '8080'}
+    disableCookieValidation: true
+    dontPrintOutput: true
+    preserveTrailingSlash: true
+    noPrependStageInUrl: true
+    skipCacheInvalidation: false
+    cacheInvalidationRegex: "(/node_modules/|/workdir/)"

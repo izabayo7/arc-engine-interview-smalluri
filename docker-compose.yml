@@ -1,0 +1,82 @@
+version: "3"
+
+networks:
+  aei:
+    driver: bridge
+#    external: false
+#    internal: false
+
+services:
+  frontend:
+    container_name: frontend
+    build: ./frontend
+    ports:
+      - "8080:8080"
+    expose:
+      - 8080
+    networks:
+      - aei
+    environment:
+      BACKEND_URL: /api
+      NODE_ENV: development
+      PORT: 8080
+      CONTEXT: /
+      # cannot allow multiple workers because of git conflicts
+      WORKERS: 1
+    volumes:
+      - ./frontend/src:/opt/frontend/src:ro
+
+  backend:
+    container_name: backend
+    build: ./backend
+    ports:
+      - "8081:8081"
+    expose:
+      - 8081
+    networks:
+      - aei
+    volumes:
+      - ./backend/src:/opt/backend/src:ro
+    environment:
+      DYNAMO_ENDPOINT: http://dynamo:8000
+      AWS_REGION: us-east-1
+      NODE_ENV: development
+      PORT: 8081
+      CONTEXT: /
+      # cannot allow multiple workers because of git conflicts
+      WORKERS: 1
+    depends_on:
+      - dynamo
+
+  dynamo:
+    container_name: dynamo
+    build: ./infrastructure/dynamo
+    ports:
+      - "8000:8000"
+    networks:
+      - aei
+    volumes:
+      - ./infrastructure/dynamo/data:/data/:rw
+
+  dynamo-admin:
+    container_name: dynamo-admin
+    build: ./infrastructure/dynamo-admin
+    ports:
+      - "8001:8001"
+    networks:
+      - aei
+    environment:
+      - DYNAMO_ENDPOINT=http://dynamo:8000
+    depends_on:
+      - dynamo
+
+  gateway:
+    container_name: gateway
+    build: ./infrastructure/gateway
+    ports:
+      - "80:80"
+    networks:
+      - aei
+    depends_on:
+      - frontend
+      - backend
