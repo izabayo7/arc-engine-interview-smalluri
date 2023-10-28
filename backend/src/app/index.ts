@@ -9,6 +9,7 @@ import errorHandler from "../middleware/error-handler";
 
 const app = express();
 app.disable("x-powered-by");
+app.use(express.json());
 app.use(router);
 app.use(errorHandler);
 

@@ -1,14 +1,14 @@
 {
-  "TableName" : "ExampleTable",
+  "TableName": "URLMappings",
   "KeySchema": [
     {
-      "AttributeName": "StringElement",
+      "AttributeName": "ShortCode",
       "KeyType": "HASH"
     }
   ],
   "AttributeDefinitions": [
     {
-      "AttributeName": "StringElement",
+      "AttributeName": "ShortCode",
       "AttributeType": "S"
     }
   ],

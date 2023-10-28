@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import { backendUrl } from "./environment";
 
 /**
@@ -8,6 +8,36 @@ export const App: FC = (_) => {
   //
   // Do whatever you need to do here to make the frontend work.
   //
+  const [fadeIn, setFadeIn] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const [url, setUrl] = useState("");
+  const [shortened, setShortened] = useState("");
+
+  const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setUrl(event.target.value);
+  }
+
+  const shorten = async () => {
+    fetch(`${backendUrl}/shorten`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url }),
+    })
+      .then((response) => {
+        return response.json();
+      })
+      .then(({ data }) => {
+        setFadeIn(true);
+        setShortened(data.shortCode);
+      })
+      .catch((error) => {
+        console.log("error", error);
+      });
+  }
+
 
   console.log("API URL:", backendUrl);
 
@@ -15,10 +45,37 @@ export const App: FC = (_) => {
     <div>
       <h1>Small URI</h1>
 
-      <label>My URL</label>
-      <input data-testid="url" />
+      {
+        shortened == "" ?
+          <div className="shorten">
+            <label>My URL</label>
+            <input onChange={handleUrlChange} data-testid="url" />
 
-      <button>Shorten</button>
+            <button onClick={shorten}>Shorten</button>
+          </div>
+          :
+          <div className={`shortened ${fadeIn ? 'fade-in' : ''}`} onAnimationEnd={() => setFadeIn(false)}>
+            <label>Shortened URL</label>
+            <input
+              value={`${backendUrl}/${shortened}`}
+              readOnly
+              data-testid="shortened" />
+
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`${backendUrl}/${shortened}`);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000); // hide after 2 seconds
+              }}
+            >Copy</button>
+            {copied && <span className="copied-message">Copied!</span>}
+
+            <button onClick={() => {
+              setUrl("")
+              setShortened("")
+            }}>Shorten Next</button>
+          </div>
+      }
     </div>
   );
 };
