@@ -15,23 +15,6 @@ import logger from "../utils/logger";
  */
 const router = express.Router();
 
-router.use("/tables", (req, res) => {
-  void dbClient.getTableNames().then((tables) => {
-    res.send({
-      data: tables,
-    });
-  });
-});
-
-router.use("/table/:tableName", (req, res) => {
-  const { tableName } = req.params;
-  void dbClient.getTableDescription(tableName).then((table) => {
-    res.send({
-      data: table,
-    });
-  });
-});
-
 router.use("/shorten", validateUrlShorteningRequest, async (req, res) => {
   const { url } = req.body;
 

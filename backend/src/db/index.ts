@@ -45,18 +45,6 @@ export class Db {
 
       return undefined;
   }
-
-  async getTableNames(): Promise<string[] | undefined> {
-    const data = await this.client.listTables({});
-    return data.TableNames;
-  }
-
-  async getTableDescription(
-    tableName: string,
-  ): Promise<TableDescription | undefined> {
-    const data = await this.client.describeTable({ TableName: tableName });
-    return data.Table;
-  }
 }
 
 export const dbClient = new Db();
