@@ -1,5 +1,6 @@
 import React, { FC, useState } from "react";
 import { backendUrl } from "./environment";
+import toast, { Toaster } from 'react-hot-toast';
 
 /**
  * This is the root component for the frontend application.
@@ -29,12 +30,16 @@ export const App: FC = (_) => {
       .then((response) => {
         return response.json();
       })
-      .then(({ data }) => {
+      .then((data) => {
         setFadeIn(true);
-        setShortened(data.shortCode);
+        if (!data.data)
+          throw new Error(data.message);
+
+        setShortened(data.data.shortCode);
       })
       .catch((error) => {
-        console.log("error", error);
+        console.log("Error:", error);
+        toast.error(error.message);
       });
   }
 
@@ -42,40 +47,43 @@ export const App: FC = (_) => {
   console.log("API URL:", backendUrl);
 
   return (
-    <div>
-      <h1>Small URI</h1>
+    <>
+      <div>
+        <h1>Small URI</h1>
 
-      {
-        shortened == "" ?
-          <div className="shorten">
-            <label>My URL</label>
-            <input onChange={handleUrlChange} data-testid="url" />
+        {
+          shortened == "" ?
+            <div className="shorten">
+              <label>My URL</label>
+              <input onChange={handleUrlChange} data-testid="url" />
 
-            <button onClick={shorten}>Shorten</button>
-          </div>
-          :
-          <div className={`shortened ${fadeIn ? 'fade-in' : ''}`} onAnimationEnd={() => setFadeIn(false)}>
-            <label>Shortened URL</label>
-            <input
-              value={`${backendUrl}/${shortened}`}
-              readOnly
-              data-testid="shortened" />
+              <button onClick={shorten}>Shorten</button>
+            </div>
+            :
+            <div className={`shortened ${fadeIn ? 'fade-in' : ''}`} onAnimationEnd={() => setFadeIn(false)}>
+              <label>Shortened URL</label>
+              <input
+                value={`${backendUrl}/${shortened}`}
+                readOnly
+                data-testid="shortened" />
 
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(`${backendUrl}/${shortened}`);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000); // hide after 2 seconds
-              }}
-            >Copy</button>
-            {copied && <span className="copied-message">Copied!</span>}
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`${backendUrl}/${shortened}`);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000); // hide after 2 seconds
+                }}
+              >Copy</button>
+              {copied && <span className="copied-message">Copied!</span>}
 
-            <button onClick={() => {
-              setUrl("")
-              setShortened("")
-            }}>Shorten Next</button>
-          </div>
-      }
-    </div>
+              <button onClick={() => {
+                setUrl("")
+                setShortened("")
+              }}>Shorten Next</button>
+            </div>
+        }
+      </div>
+      <Toaster />
+    </>
   );
 };

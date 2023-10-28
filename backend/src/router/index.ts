@@ -2,7 +2,7 @@ import express from "express";
 import { dbClient } from "../db";
 import { getUniqueShortCode } from "../utils/shortCodeGenerator";
 import { validateUrlRetrievalRequest, validateUrlShorteningRequest } from "../middleware/request-validator";
-
+import logger from "../utils/logger";
 //
 // Make whatever changes you need to make the router work how you need it
 // to. This is just a basic example; you can add more routes, middleware,
@@ -35,27 +35,47 @@ router.use("/table/:tableName", (req, res) => {
 router.use("/shorten", validateUrlShorteningRequest, async (req, res) => {
   const { url } = req.body;
 
-  const shortCode = await getUniqueShortCode(dbClient, parseInt(process.env.SHORT_CODE_LENGTH ?? "5")); // default length is 5, since we can theoretically store up to 916,132,832 unique URLs using a 5-length shortCode
+  logger.info(`Received request to shorten URL: ${url}`);
 
-  void dbClient.storeUrl(shortCode, url).then(() => {
+  try {
+    const shortCode = await getUniqueShortCode(dbClient, parseInt(process.env.SHORT_CODE_LENGTH ?? "5")); // default length is 5
+    logger.debug(`Generated shortCode for URL ${url}: ${shortCode}`);
+
+    await dbClient.storeUrl(shortCode, url);
+    logger.info(`Stored URL: ${url} with shortCode: ${shortCode}`);
+
     res.status(201).send({
       data: {
         shortCode,
         url,
       },
     });
-  });
+  } catch (error: any) {
+    logger.error(`Error shortening URL ${url}: ${error.message}`);
+    res.status(500).send({ error: 'Failed to shorten the URL.' });
+  }
 });
 
 router.use("/:shortCode", validateUrlRetrievalRequest, async (req, res) => {
   const { shortCode } = req.params;
-  const url = await dbClient.getUrl(shortCode);
 
-  if (!url) {
-    return res.sendStatus(404);
+  logger.info(`Received request to retrieve original URL for shortCode: ${shortCode}`);
+
+  try {
+    const url = await dbClient.getUrl(shortCode);
+
+    if (!url) {
+      logger.warn(`No URL found for shortCode: ${shortCode}`);
+      return res.sendStatus(404);
+    }
+
+    logger.info(`Redirecting to URL: ${url} for shortCode: ${shortCode}`);
+    res.redirect(url);
+  } catch (error: any) {
+    logger.error(`Error retrieving URL for shortCode ${shortCode}: ${error.message}`);
+    res.status(500).send({ error: 'Failed to retrieve the URL.' });
   }
-
-  res.redirect(url);
 });
+
 
 export default router;

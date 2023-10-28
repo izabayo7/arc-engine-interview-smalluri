@@ -1,7 +1,9 @@
 import { ErrorRequestHandler } from "express-serve-static-core";
+import logger from "../utils/logger";
 
 const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
-  console.error(err);
+  
+  logger.error(err);
 
   res.status(err.statusCode ?? 500);
   res.set(err.headers ?? {});

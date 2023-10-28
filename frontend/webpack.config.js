@@ -41,7 +41,7 @@ module.exports = (env, argv) => {
     config.devtool = "inline-source-map";
     config.devServer = {
       compress: true,
-      port: 8080,
+      port: 3000,
     };
   }
 
