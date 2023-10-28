@@ -55,7 +55,7 @@ export const App: FC = (_) => {
           shortened == "" ?
             <div className="shorten">
               <label>My URL</label>
-              <input onChange={handleUrlChange} data-testid="url" />
+              <input key={"url-input"} onChange={handleUrlChange} data-testid="url" />
 
               <button onClick={shorten}>Shorten</button>
             </div>
@@ -63,6 +63,7 @@ export const App: FC = (_) => {
             <div className={`shortened ${fadeIn ? 'fade-in' : ''}`} onAnimationEnd={() => setFadeIn(false)}>
               <label>Shortened URL</label>
               <input
+                key={"shortened-input"}
                 value={`${backendUrl}/${shortened}`}
                 readOnly
                 data-testid="shortened" />

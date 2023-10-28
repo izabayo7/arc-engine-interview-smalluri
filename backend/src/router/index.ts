@@ -3,6 +3,9 @@ import { dbClient } from "../db";
 import { getUniqueShortCode } from "../utils/shortCodeGenerator";
 import { validateUrlRetrievalRequest, validateUrlShorteningRequest } from "../middleware/request-validator";
 import logger from "../utils/logger";
+import { client } from '../utils/redis';
+import { redisExpiry, shortCodeLength } from '../environment'; // default expiry is 24 hours since neither the url nor the short code is expected to change
+
 //
 // Make whatever changes you need to make the router work how you need it
 // to. This is just a basic example; you can add more routes, middleware,
@@ -21,11 +24,27 @@ router.use("/shorten", validateUrlShorteningRequest, async (req, res) => {
   logger.info(`Received request to shorten URL: ${url}`);
 
   try {
-    const shortCode = await getUniqueShortCode(dbClient, parseInt(process.env.SHORT_CODE_LENGTH ?? "5")); // default length is 5
+
+    // Check cache first
+    const cachedShortCode = await client.get(url);
+    if (cachedShortCode) {
+      logger.info(`Returning cached shortCode: ${cachedShortCode} for URL: ${url}`);
+      return res.status(200).send({
+        data: {
+          shortCode: cachedShortCode,
+          url,
+        },
+      });
+    }
+
+    const shortCode = await getUniqueShortCode(dbClient, shortCodeLength); // default length is 5
     logger.debug(`Generated shortCode for URL ${url}: ${shortCode}`);
 
     await dbClient.storeUrl(shortCode, url);
     logger.info(`Stored URL: ${url} with shortCode: ${shortCode}`);
+
+    // cache the url
+    await client.set(url, shortCode, { EX: redisExpiry });
 
     res.status(201).send({
       data: {
@@ -45,6 +64,14 @@ router.use("/:shortCode", validateUrlRetrievalRequest, async (req, res) => {
   logger.info(`Received request to retrieve original URL for shortCode: ${shortCode}`);
 
   try {
+
+    // Check cache first
+    const cachedUrl = await client.get(shortCode);
+    if (cachedUrl) {
+      logger.info(`Redirecting to cached URL: ${cachedUrl} for shortCode: ${shortCode}`);
+      return res.redirect(cachedUrl);
+    }
+
     const url = await dbClient.getUrl(shortCode);
 
     if (!url) {
@@ -52,8 +79,12 @@ router.use("/:shortCode", validateUrlRetrievalRequest, async (req, res) => {
       return res.sendStatus(404);
     }
 
+    // Cache the result for next time
+    await client.set(shortCode, url, { EX: redisExpiry });
+
     logger.info(`Redirecting to URL: ${url} for shortCode: ${shortCode}`);
     res.redirect(url);
+
   } catch (error: any) {
     logger.error(`Error retrieving URL for shortCode ${shortCode}: ${error.message}`);
     res.status(500).send({ error: 'Failed to retrieve the URL.' });

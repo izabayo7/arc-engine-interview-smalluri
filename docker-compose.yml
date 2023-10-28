@@ -43,10 +43,23 @@ services:
       NODE_ENV: development
       PORT: 8081
       CONTEXT: /
+      SHORT_CODE_LENGTH: 5
+      REDIS_EXPIRY: 86400
+      REDIS_URL: redis:6379
       # cannot allow multiple workers because of git conflicts
       WORKERS: 1
     depends_on:
       - dynamo
+      - redis
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - aei
+    command: redis-server --appendonly yes  # enabling persistence
 
   dynamo:
     container_name: dynamo

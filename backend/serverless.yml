@@ -9,6 +9,9 @@ provider:
   region: us-east-1
   environment:
     NODE_ENV: ${env:NODE_ENV, 'development'}
+    SHORT_CODE_LENGTH: ${env:SHORT_CODE_LENGTH, 5}
+    REDIS_EXPIRY: ${env:REDIS_EXPIRY, 86400}
+    REDIS_URL: ${env:REDIS_URL, 'redis://localhost:6379'}
 
 functions:
   backend:

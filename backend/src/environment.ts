@@ -8,3 +8,9 @@ export const dynamoOptions = {
   // This is populated by the build process.
   endpoint: process.env.DYNAMO_ENDPOINT ?? "",
 };
+
+export const shortCodeLength = parseInt(process.env.SHORT_CODE_LENGTH ?? "5");
+
+export const redisExpiry = parseInt(process.env.REDIS_EXPIRY ?? "86400");
+
+export const redisUrl = process.env.REDIS_URL ?? "";
