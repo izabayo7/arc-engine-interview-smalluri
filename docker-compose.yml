@@ -10,14 +10,14 @@ services:
   frontend:
     container_name: frontend
     build: ./frontend
-    ports:
-      - "8080:8080"
+    # ports:
+    #   - "8080:8080"
     expose:
       - 8080
     networks:
       - aei
     environment:
-      BACKEND_URL: /api
+      BACKEND_URL: http://localhost/api
       NODE_ENV: development
       PORT: 8080
       CONTEXT: /
@@ -58,6 +58,8 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
+    expose:
+      - 6379
     networks:
       - aei
     command: redis-server --appendonly yes  # enabling persistence
@@ -65,10 +67,13 @@ services:
   redis-commander:
     image: rediscommander/redis-commander:latest
     environment:
-      - REDIS_HOSTS=localhost
-    # ports:
-    #   - "8081:8081"
-    network_mode: "host"
+      - REDIS_HOSTS=redis
+    ports:
+      - "8082:8081"
+    expose:
+      - 8081
+    networks:
+      - aei
     depends_on:
       - redis
 
@@ -87,6 +92,8 @@ services:
     build: ./infrastructure/dynamo-admin
     ports:
       - "8001:8001"
+    expose:
+      - 8001
     networks:
       - aei
     environment:
